@@ -1,0 +1,21 @@
+GET http://localhost:4000/blogs
+###
+POST http://localhost:4000/blog 
+Content-Type: application/json
+
+{
+ "title": "new blog again",
+ "content": "new content again"
+}
+
+###
+
+POST http://localhost:4002/auth/signup
+
+Content-Type: application/json
+
+{
+    "name": "amar",
+    "email":"test@test.com",
+    "password":"pasword"
+}
