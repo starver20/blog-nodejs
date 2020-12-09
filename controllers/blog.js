@@ -1,3 +1,4 @@
+const blog = require("../models/blog");
 const Blog = require("../models/blog");
 const User = require("../models/user");
 
@@ -47,6 +48,42 @@ exports.getBlog = (req, res, next) => {
         throw err;
       }
       res.json({ message: "Blog found", blog: blog });
+    })
+    .catch((err) => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
+exports.updateBlog = (req, res, next) => {
+  const blogId = req.params.blogId;
+
+  const title = req.body.title;
+  const content = req.body.content;
+
+  Blog.findById(blogId)
+    .then((blog) => {
+      if (!blog) {
+        const err = new Error("Blog not found");
+        err.statusCode = 404;
+        throw err;
+      }
+      if (blog.creator.toString() !== req.userId.toString()) {
+        const err = new Error(
+          "not authorized, since not the creator of the post"
+        );
+        err.statusCode = 401;
+        throw err;
+      }
+      blog.title = title;
+      blog.content = content;
+
+      return blog.save();
+    })
+    .then((updatedBlog) => {
+      res.json({ message: "Updated successfully", blog: updatedBlog });
     })
     .catch((err) => {
       if (!err.statusCode) {
