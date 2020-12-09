@@ -92,3 +92,40 @@ exports.updateBlog = (req, res, next) => {
       next(err);
     });
 };
+
+exports.deleteBlog = (req, res, next) => {
+  const blogId = req.params.blogId;
+
+  Blog.findById(blogId)
+    .then((blog) => {
+      if (!blog) {
+        const err = new Error("Blog not found");
+        err.statusCode = 404;
+        throw err;
+      }
+      if (blog.creator.toString() !== req.userId.toString()) {
+        const err = new Error(
+          "Not authorized to delete this blog...since not the creator"
+        );
+        err.statusCode = 501;
+        throw err;
+      }
+      return Blog.findByIdAndRemove(blogId);
+    })
+    .then((result) => {
+      return User.findById(req.userId);
+    })
+    .then((user) => {
+      user.blogs.pull(blogId);
+      return user.save();
+    })
+    .then((user) => {
+      res.json({ message: "deleted successfully" });
+    })
+    .catch((err) => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
