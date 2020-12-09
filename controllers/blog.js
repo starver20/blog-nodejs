@@ -1,4 +1,5 @@
 const Blog = require("../models/blog");
+const User = require("../models/user");
 
 exports.getBlogs = (req, res, next) => {
   Blog.find().then((blogs) => {
@@ -21,9 +22,18 @@ exports.createBlog = (req, res, next) => {
     likes: 8,
     views: 7,
   });
-  blog.save().then((result) => {
-    res.json({ message: "post created", blogs: blog });
-  });
+
+  blog
+    .save()
+    .then((result) => {
+      User.findById(req.userId).then((user) => {
+        user.blogs.push(blog);
+        return user.save();
+      });
+    })
+    .then((result) => {
+      res.json({ message: "post created", blogs: blog });
+    });
 };
 
 exports.getBlog = (req, res, next) => {
