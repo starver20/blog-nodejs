@@ -2,14 +2,21 @@ const blog = require("../models/blog");
 const Blog = require("../models/blog");
 const User = require("../models/user");
 
-exports.getBlogs = (req, res, next) => {
-  Blog.find().then((blogs) => {
-    console.log(blogs);
-    if (blogs === []) {
-      return res.json({ messaage: "No blogs found", blogs: blogs });
+exports.getBlogs = async (req, res, next) => {
+  try {
+    const blogs = await Blog.find();
+    if (!blogs) {
+      const err = new Error("blogs not found");
+      err.statusCode = 404;
+      throw err;
     }
-    res.json({ message: "hi there", blogs: blogs });
-  });
+    return res.status(200).json({ message: "blogs found", blogs: blogs });
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    throw err;
+  }
 };
 
 exports.createBlog = (req, res, next) => {
@@ -20,8 +27,8 @@ exports.createBlog = (req, res, next) => {
     title: title,
     content: content,
     creator: req.userId,
-    likes: 8,
-    views: 7,
+    likes: 0,
+    views: 0,
   });
 
   blog
@@ -41,12 +48,17 @@ exports.getBlog = (req, res, next) => {
   const blogId = req.params.blogId;
 
   Blog.findById(blogId)
+    .populate("creator")
     .then((blog) => {
       if (!blog) {
         const err = new Error("blog not found");
         err.statusCode = 404;
         throw err;
       }
+      blog.views = blog.views + 1;
+      return blog.save();
+    })
+    .then((blog) => {
       res.json({ message: "Blog found", blog: blog });
     })
     .catch((err) => {

@@ -1,9 +1,13 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require("cors");
 
 const app = express();
 
+app.use(express.urlencoded());
 app.use(express.json());
+
+app.use(cors());
 
 const blogRoutes = require("./routes/blog");
 const authRoutes = require("./routes/auth");
@@ -29,3 +33,6 @@ mongoose
   .then((result) => {
     console.log("connected to 4000");
   });
+/**
+ * bhej requesti  abe ye try kiya maine...data record ho raha hai...fir bhi dikhata hu
+ */

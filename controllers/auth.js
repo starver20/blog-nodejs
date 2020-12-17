@@ -30,6 +30,8 @@ exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
 
+  console.log(req.body);
+
   let loadedUser;
   User.findOne({ email: email })
     .then((user) => {
@@ -51,7 +53,7 @@ exports.postLogin = (req, res, next) => {
         { userId: loadedUser._id.toString(), email: loadedUser.email },
         "secret",
         {
-          expiresIn: "5m",
+          expiresIn: "1h",
         }
       );
       res.json({

@@ -20,3 +20,4 @@ router.put("/blog/:blogId", auth, blogController.updateBlog);
 router.delete("/blog/:blogId", auth, blogController.deleteBlog);
 
 module.exports = router;
+//ek min
