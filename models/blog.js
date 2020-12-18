@@ -16,12 +16,23 @@ const blogSchema = new Schema({
     required: true,
   },
   likes: {
-    type: Number,
-    required: true,
+    total: {
+      type: Number,
+    },
+    users: {
+      type: Array,
+      ref: "user",
+    },
   },
+
   views: {
-    type: Number,
-    required: true,
+    total: {
+      type: Number,
+    },
+    users: {
+      type: Array,
+      ref: "user",
+    },
   },
 });
 

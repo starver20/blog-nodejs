@@ -10,7 +10,10 @@ exports.getBlogs = async (req, res, next) => {
       err.statusCode = 404;
       throw err;
     }
-    return res.status(200).json({ message: "blogs found", blogs: blogs });
+    return res.status(200).json({
+      message: "blogs found",
+      blogs: blogs,
+    });
   } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500;
@@ -23,12 +26,21 @@ exports.createBlog = (req, res, next) => {
   const title = req.body.title;
   const content = req.body.content;
 
+  const like = {
+    total: 0,
+    users: [],
+  };
+  const view = {
+    total: 0,
+    users: [],
+  };
+
   const blog = new Blog({
     title: title,
     content: content,
     creator: req.userId,
-    likes: 0,
-    views: 0,
+    likes: like,
+    views: view,
   });
 
   blog
@@ -44,29 +56,34 @@ exports.createBlog = (req, res, next) => {
     });
 };
 
-exports.getBlog = (req, res, next) => {
+exports.getBlog = async (req, res, next) => {
   const blogId = req.params.blogId;
+  try {
+    const blog = await Blog.findById(blogId).populate("creator");
 
-  Blog.findById(blogId)
-    .populate("creator")
-    .then((blog) => {
-      if (!blog) {
-        const err = new Error("blog not found");
-        err.statusCode = 404;
-        throw err;
-      }
-      blog.views = blog.views + 1;
-      return blog.save();
-    })
-    .then((blog) => {
-      res.json({ message: "Blog found", blog: blog });
-    })
-    .catch((err) => {
-      if (!err.statusCode) {
-        err.statusCode = 500;
-      }
-      next(err);
-    });
+    if (!blog) {
+      const err = new Error("blog not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const user = await blog.views.users.every((id) => id !== req.userId);
+
+    if (!user) {
+      return res.json(blog);
+    } else {
+      blog.views.total = blog.views.total + 1;
+      blog.views.users.push(req.userId);
+      const blogData = await blog.save();
+
+      res.json(blogData);
+    }
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
 };
 
 exports.updateBlog = (req, res, next) => {
@@ -140,4 +157,35 @@ exports.deleteBlog = (req, res, next) => {
       }
       next(err);
     });
+};
+
+exports.like = async (req, res, next) => {
+  const blogId = req.params.blogId;
+  try {
+    const blog = await Blog.findById({ _id: blogId });
+    if (!blog) {
+      const err = new Error("Blog not found");
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const user = await blog.likes.users.every(
+      (id) => id.toString() !== req.userId.toString()
+    );
+
+    if (user) {
+      console.log(user);
+      blog.likes.total = blog.likes.total + 1;
+      blog.likes.users.push(req.userId);
+
+      const data = await blog.save();
+
+      res.status(200).json({ message: "liked" });
+    }
+  } catch (err) {
+    if (!err.statusCode) {
+      err.statusCode = 500;
+    }
+    next(err);
+  }
 };
